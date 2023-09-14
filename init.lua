@@ -131,13 +131,13 @@ require('lazy').setup({
 
         -- don't override the built-in and fugitive keymaps
         local gs = package.loaded.gitsigns
-        vim.keymap.set({'n', 'v'}, ']c', function()
-          if vim.wo.diff then return ']c' end
+        vim.keymap.set({'n', 'v'}, 'äc', function()
+          if vim.wo.diff then return 'äc' end
           vim.schedule(function() gs.next_hunk() end)
           return '<Ignore>'
         end, {expr=true, buffer = bufnr, desc = "Jump to next hunk"})
-        vim.keymap.set({'n', 'v'}, '[c', function()
-          if vim.wo.diff then return '[c' end
+        vim.keymap.set({'n', 'v'}, 'öc', function()
+          if vim.wo.diff then return 'öc' end
           vim.schedule(function() gs.prev_hunk() end)
           return '<Ignore>'
         end, {expr=true, buffer = bufnr, desc = "Jump to previous hunk"})
@@ -219,6 +219,15 @@ require('lazy').setup({
     },
   },
 
+  {
+    'saecki/crates.nvim',
+    tag = 'v0.3.0',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+        require('crates').setup()
+    end,
+  },
+
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
@@ -243,6 +252,7 @@ vim.o.hlsearch = false
 
 -- Make line numbers default
 vim.wo.number = true
+vim.wo.relativenumber = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
@@ -257,6 +267,8 @@ vim.o.breakindent = true
 
 -- Save undo history
 vim.o.undofile = true
+
+vim.o.incsearch = true
 
 -- Case-insensitive searching UNLESS \C or capital in search
 vim.o.ignorecase = true
@@ -314,12 +326,12 @@ pcall(require('telescope').load_extension, 'fzf')
 
 -- See `:help telescope.builtin`
 vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })
-vim.keymap.set('n', '<leader><space>', require('telescope.builtin').buffers, { desc = '[ ] Find existing buffers' })
+vim.keymap.set('n', '<leader>.', require('telescope.builtin').buffers, { desc = '[ ] Find existing buffers' })
 vim.keymap.set('n', '<leader>/', function()
   -- You can pass additional configuration to telescope to change theme, layout, etc.
   require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
     winblend = 10,
-    previewer = false,
+    previewer = true,
   })
 end, { desc = '[/] Fuzzily search in current buffer' })
 
@@ -370,20 +382,20 @@ require('nvim-treesitter.configs').setup {
       enable = true,
       set_jumps = true, -- whether to set jumps in the jumplist
       goto_next_start = {
-        [']m'] = '@function.outer',
-        [']]'] = '@class.outer',
+        ['äm'] = '@function.outer',
+        ['ää'] = '@class.outer',
       },
       goto_next_end = {
-        [']M'] = '@function.outer',
-        [']['] = '@class.outer',
+        ['äM'] = '@function.outer',
+        ['äö'] = '@class.outer',
       },
       goto_previous_start = {
-        ['[m'] = '@function.outer',
-        ['[['] = '@class.outer',
+        ['öm'] = '@function.outer',
+        ['öö'] = '@class.outer',
       },
       goto_previous_end = {
-        ['[M'] = '@function.outer',
-        ['[]'] = '@class.outer',
+        ['öM'] = '@function.outer',
+        ['öä'] = '@class.outer',
       },
     },
     swap = {
@@ -461,7 +473,13 @@ local servers = {
   clangd = {},
   -- gopls = {},
   pyright = {},
-  rust_analyzer = {},
+  rust_analyzer = {
+    ["rust-analyzer"] = {
+      check = {
+        command = "clippy",
+      },
+    },
+  },
   tsserver = {},
   html = { filetypes = { 'html', 'twig', 'hbs'} },
 
@@ -542,124 +560,54 @@ cmp.setup {
   },
   sources = {
     { name = 'nvim_lsp' },
-    { name = 'luasnip' },
+    { name = "crates" },
+    --{ name = 'luasnip' },
   },
 }
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 
+-- Easier switch to normal mode
+vim.keymap.set('t', '<C-w><C-c>', "C-\\><C-n>", {silent = true, desc = "normal mode"})
 -- Make windows work for terminal buffers
 vim.keymap.set('t', '<C-w>h', "<C-\\><C-n><C-w>h",{silent = true})
 vim.keymap.set('t', '<C-w>j', "<C-\\><C-n><C-w>j",{silent = true})
 vim.keymap.set('t', '<C-w>k', "<C-\\><C-n><C-w>k",{silent = true})
 vim.keymap.set('t', '<C-w>l', "<C-\\><C-n><C-w>l",{silent = true})
--- Easier switch to normal mode
-vim.keymap.set('t', '<C-w><C-c>', "<C-\\><C-n>",{silent = true})
+-- Easier window switch
+vim.keymap.set({'n', 't'}, '<M-h>', "<C-w>h", {silent = true, desc = "Window left"})
+vim.keymap.set({'n', 't'}, '<M-j>', "<C-w>j", {silent = true, desc = "Window down"})
+vim.keymap.set({'n', 't'}, '<M-k>', "<C-w>k", {silent = true, desc = "Window up"})
+vim.keymap.set({'n', 't'}, '<M-l>', "<C-w>l", {silent = true, desc = "Window right"})
+
+-- Open config
+vim.keymap.set('n', '<leader>oc', ':e $MYVIMRC<CR>', {silent = true, desc = "Open config"})
+
+-- Format buffer
+vim.keymap.set('n', '<leader>fb', vim.lsp.buf.format, {silent = true, desc = "[F]ormat [b]uffer"})
+-- Quick switch
+vim.keymap.set('n', '<leader><leader>', '<c-^>', {silent = true, desc = "Prev buffer"})
+
+-- German keyboard
+--vim.keymap.set('n', 'ö', '[')
+--vim.keymap.set('n', 'ä', ']')
 
 -- Configure vim rooter
 require'nvim-rooter'.setup()
 
 -- Setup terminal
-vim.keymap.set('n', '<leader>tt', "<C-w>v <C-w>w :terminal<CR> a", {silent = true})
+vim.keymap.set('n', '<leader>tt', "<C-w>v <C-w>w :terminal<CR> a", {silent = true, desc = "Open vsp term"})
+
+-- Git shortcuts
+vim.keymap.set('n', '<leader>gdi', ':Gvdiffsplit<CR>', {silent = true, desc = "Vertical git diffsplit index"})
+vim.keymap.set('n', '<leader>gdh', ':Gvdiffsplit HEAD', {silent = false, desc = "Vertical git diffsplit inter."})
 
 -- Set default shell to fish
-vim.cmd(":set shell=/opt/homebrew/bin/fish")
-
--- github
-require('litee.lib').setup()
-require('litee.gh').setup({
-  -- deprecated, around for compatability for now.
-  jump_mode   = "invoking",
-  -- remap the arrow keys to resize any litee.nvim windows.
-  map_resize_keys = false,
-  -- do not map any keys inside any gh.nvim buffers.
-  disable_keymaps = false,
-  -- the icon set to use.
-  icon_set = "default",
-  -- any custom icons to use.
-  icon_set_custom = nil,
-  -- whether to register the @username and #issue_number omnifunc completion
-  -- in buffers which start with .git/
-  git_buffer_completion = true,
-  -- defines keymaps in gh.nvim buffers.
-  keymaps = {
-      -- when inside a gh.nvim panel, this key will open a node if it has
-      -- any futher functionality. for example, hitting <CR> on a commit node
-      -- will open the commit's changed files in a new gh.nvim panel.
-      open = "<CR>",
-      -- when inside a gh.nvim panel, expand a collapsed node
-      expand = "zo",
-      -- when inside a gh.nvim panel, collpased and expanded node
-      collapse = "zc",
-      -- when cursor is over a "#1234" formatted issue or PR, open its details
-      -- and comments in a new tab.
-      goto_issue = "gd",
-      -- show any details about a node, typically, this reveals commit messages
-      -- and submitted review bodys.
-      details = "d",
-      -- inside a convo buffer, submit a comment
-      submit_comment = "<C-s>",
-      -- inside a convo buffer, when your cursor is ontop of a comment, open
-      -- up a set of actions that can be performed.
-      actions = "<C-a>",
-      -- inside a thread convo buffer, resolve the thread.
-      resolve_thread = "<C-r>",
-      -- inside a gh.nvim panel, if possible, open the node's web URL in your
-      -- browser. useful particularily for digging into external failed CI
-      -- checks.
-      goto_web = "gx"
-  }
-})
-
-local wk = require("which-key")
-wk.register({
-    g = {
-        name = "+Git",
-        h = {
-            name = "+Github",
-            c = {
-                name = "+Commits",
-                c = { "<cmd>GHCloseCommit<cr>", "Close" },
-                e = { "<cmd>GHExpandCommit<cr>", "Expand" },
-                o = { "<cmd>GHOpenToCommit<cr>", "Open To" },
-                p = { "<cmd>GHPopOutCommit<cr>", "Pop Out" },
-                z = { "<cmd>GHCollapseCommit<cr>", "Collapse" },
-            },
-            i = {
-                name = "+Issues",
-                p = { "<cmd>GHPreviewIssue<cr>", "Preview" },
-            },
-            l = {
-                name = "+Litee",
-                t = { "<cmd>LTPanel<cr>", "Toggle Panel" },
-            },
-            r = {
-                name = "+Review",
-                b = { "<cmd>GHStartReview<cr>", "Begin" },
-                c = { "<cmd>GHCloseReview<cr>", "Close" },
-                d = { "<cmd>GHDeleteReview<cr>", "Delete" },
-                e = { "<cmd>GHExpandReview<cr>", "Expand" },
-                s = { "<cmd>GHSubmitReview<cr>", "Submit" },
-                z = { "<cmd>GHCollapseReview<cr>", "Collapse" },
-            },
-            p = {
-                name = "+Pull Request",
-                c = { "<cmd>GHClosePR<cr>", "Close" },
-                d = { "<cmd>GHPRDetails<cr>", "Details" },
-                e = { "<cmd>GHExpandPR<cr>", "Expand" },
-                o = { "<cmd>GHOpenPR<cr>", "Open" },
-                p = { "<cmd>GHPopOutPR<cr>", "PopOut" },
-                r = { "<cmd>GHRefreshPR<cr>", "Refresh" },
-                t = { "<cmd>GHOpenToPR<cr>", "Open To" },
-                z = { "<cmd>GHCollapsePR<cr>", "Collapse" },
-            },
-            t = {
-                name = "+Threads",
-                c = { "<cmd>GHCreateThread<cr>", "Create" },
-                n = { "<cmd>GHNextThread<cr>", "Next" },
-                t = { "<cmd>GHToggleThread<cr>", "Toggle" },
-            },
-        },
-    },
-}, { prefix = "<leader>" })
+if vim.fn.executable("fish") == -1 then
+  vim.cmd(":set shell=fish")
+elseif vim.fn.executable("zsh") == -1 then
+  vim.cmd(":set shell=zsh")
+else
+  vim.cmd(":set shell=bash")
+end
